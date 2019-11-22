@@ -7,7 +7,10 @@ environment:
 dependencies:
   flutter: 
     sdk: flutter
-  form_bloc: ^0.6.0
+  form_bloc:
+    git:
+      url: git://github.com/jpunie/form_bloc.git
+      path: packages/form_bloc
   flutter_form_bloc:
     path: ../
   bloc: ^1.0.0

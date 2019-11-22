@@ -15,6 +15,7 @@ import '../input_field/input_field_state.dart';
 import '../text_field/text_field_state.dart';
 import '../boolean_field/boolean_field_state.dart';
 import '../select_field/select_field_state.dart';
+import '../grouped_select_field/grouped_select_field_state.dart';
 import '../multi_select_field/multi_select_field_state.dart';
 
 export 'field_event.dart';
@@ -23,12 +24,14 @@ export '../input_field/input_field_state.dart';
 export '../text_field/text_field_state.dart';
 export '../boolean_field/boolean_field_state.dart';
 export '../select_field/select_field_state.dart';
+export '../grouped_select_field/grouped_select_field_state.dart';
 export '../multi_select_field/multi_select_field_state.dart';
 
 part '../input_field/input_field_bloc.dart';
 part '../text_field/text_field_bloc.dart';
 part '../boolean_field/boolean_field_bloc.dart';
 part '../select_field/select_field_bloc.dart';
+part '../grouped_select_field/grouped_select_field_bloc.dart';
 part '../multi_select_field/multi_select_field_bloc.dart';
 
 /// Signature for the [Validator] function which takes [value]
@@ -51,6 +54,7 @@ typedef Suggestions<Value> = Future<List<Value>> Function(String pattern);
 /// * [TextFieldBloc].
 /// * [BooleanFieldBloc].
 /// * [SelectFieldBloc].
+/// * [GroupedSelectFieldBloc].
 /// * [MultiSelectFieldBloc].
 
 class FieldBloc {}
@@ -62,6 +66,7 @@ class FieldBloc {}
 /// * [TextFieldBloc].
 /// * [BooleanFieldBloc].
 /// * [SelectFieldBloc].
+/// * [GroupedSelectFieldBloc].
 /// * [MultiSelectFieldBloc].
 abstract class FieldBlocBase<Value, Suggestion,
         State extends FieldBlocState<Value, Suggestion>>

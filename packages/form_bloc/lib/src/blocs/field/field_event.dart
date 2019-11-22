@@ -123,6 +123,32 @@ class AddFieldBlocItem<Value> extends FieldBlocEvent {
   List<Object> get props => [item];
 }
 
+class UpdateFieldBlocGroupedItems<GroupValue, Value> extends FieldBlocEvent {
+  final Map<GroupValue, List<Value>> grouped_items;
+
+  UpdateFieldBlocGroupedItems(this.grouped_items);
+
+  @override
+  String toString() => '$runtimeType { grouped_items: $grouped_items }';
+
+  @override
+  List<Object> get props => [grouped_items];
+}
+
+class AddFieldBlocGroupedItem<GroupValue, Value> extends FieldBlocEvent {
+  final GroupValue group;
+  final Value item;
+
+  AddFieldBlocGroupedItem(this.group, this.item);
+
+  @override
+  String toString() => '$runtimeType { group: $group, item: $item }';
+
+  @override
+  List<Object> get props => [{group: item}];
+}
+
+
 class RemoveFieldBlocItem<Value> extends FieldBlocEvent {
   final Value item;
 
