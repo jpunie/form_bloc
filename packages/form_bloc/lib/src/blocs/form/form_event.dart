@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-import 'form_state.dart';
+part of 'form_bloc.dart';
 
 abstract class FormBlocEvent extends Equatable {}
 
@@ -24,8 +22,9 @@ class UpdateFormBlocState<SuccessResponse, FailureResponse>
 
 class UpdateFormBlocStateIsValid extends FormBlocEvent {
   final bool isValid;
+  final int step;
 
-  UpdateFormBlocStateIsValid(this.isValid);
+  UpdateFormBlocStateIsValid({@required this.isValid, @required this.step});
 
   @override
   String toString() => '$runtimeType: { isValid: $isValid }';
@@ -54,7 +53,63 @@ class CancelSubmissionFormBloc extends FormBlocEvent {
   List<Object> get props => [];
 }
 
-class OnSubmittingFormBloc extends FormBlocEvent {
+class DeleteFormBloc extends FormBlocEvent {
   @override
   List<Object> get props => [];
+}
+
+class AddFieldBloc extends FormBlocEvent {
+  final int step;
+  final FieldBloc fieldBloc;
+
+  AddFieldBloc({@required this.step, @required this.fieldBloc});
+
+  @override
+  List<Object> get props => [step, fieldBloc];
+}
+
+class AddFieldBlocs extends FormBlocEvent {
+  final int step;
+  final List<FieldBloc> fieldBlocs;
+
+  AddFieldBlocs({@required this.step, @required this.fieldBlocs});
+
+  @override
+  List<Object> get props => [step, fieldBlocs];
+}
+
+class RemoveFieldBloc extends FormBlocEvent {
+  final FieldBloc fieldBloc;
+
+  RemoveFieldBloc({@required this.fieldBloc});
+
+  @override
+  List<Object> get props => [fieldBloc];
+}
+
+class RemoveFieldBlocs extends FormBlocEvent {
+  final List<FieldBloc> fieldBlocs;
+
+  RemoveFieldBlocs({@required this.fieldBlocs});
+
+  @override
+  List<Object> get props => [fieldBlocs];
+}
+
+class RefreshFieldBlocsSubscription extends FormBlocEvent {
+  @override
+  List<Object> get props => [];
+}
+
+class PreviousStepFormBlocEvent extends FormBlocEvent {
+  @override
+  List<Object> get props => [];
+}
+
+class UpdateCurrentStepFormBlocEvent extends FormBlocEvent {
+  final int step;
+
+  UpdateCurrentStepFormBlocEvent(this.step);
+  @override
+  List<Object> get props => [step];
 }

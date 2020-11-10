@@ -4,11 +4,17 @@ part of '../field/field_bloc.dart';
 /// it is also used to obtain `int` and `double` values
 /// ​​of texts thanks to the methods
 /// [valueToInt] and [valueToDouble].
-class TextFieldBloc extends FieldBlocBase<String, String, TextFieldBlocState> {
+class TextFieldBloc<ExtraData> extends SingleFieldBloc<String, String,
+    TextFieldBlocState<ExtraData>, ExtraData> {
+  /// ## TextFieldBloc<ExtraData>
+  ///
   /// ### Properties:
   ///
+  /// * [name] : It is the string that identifies the fieldBloc,
+  /// it is available in [FieldBlocState.name].
   /// * [initialValue] : The initial value of the field,
   /// by default is a empty `String` ('').
+  /// And if the value is `null` it will be a empty `String` ('').
   /// * [validators] : List of [Validator]s.
   /// Each time the `value` will change,
   /// if the [FormBloc] that use this [TextFieldBloc] has set
@@ -30,35 +36,50 @@ class TextFieldBloc extends FieldBlocBase<String, String, TextFieldBlocState> {
   /// It is used to suggest values, usually from an API,
   /// and any of those suggestions can be used to update
   /// the value using [updateValue].
-  /// * [toStringName] : This will be added to [TextFieldBlocState.toStringName].
+  /// * [extraData] : It is an object that you can use to add extra data, it will be available in the state [FieldBlocState.extraData].
   TextFieldBloc({
+    String name,
     String initialValue = '',
     List<Validator<String>> validators,
     List<AsyncValidator<String>> asyncValidators,
     Duration asyncValidatorDebounceTime = const Duration(milliseconds: 500),
     Suggestions<String> suggestions,
-    String toStringName,
-  })  : assert(initialValue != null),
-        assert(asyncValidatorDebounceTime != null),
+    ExtraData extraData,
+  })  : assert(asyncValidatorDebounceTime != null),
         super(
-          initialValue,
+          initialValue ?? '',
           validators,
           asyncValidators,
           asyncValidatorDebounceTime,
           suggestions,
-          toStringName,
+          name,
+          (value) => value,
+          extraData,
+          TextFieldBlocState(
+            value: initialValue ?? '',
+            error: FieldBlocUtils.getInitialStateError(
+              validators: validators,
+              value: initialValue ?? '',
+            ),
+            isInitial: true,
+            suggestions: suggestions,
+            isValidated: FieldBlocUtils.getInitialIsValidated(
+              FieldBlocUtils.getInitialStateIsValidating(
+                asyncValidators: asyncValidators,
+                validators: validators,
+                value: initialValue ?? '',
+              ),
+            ),
+            isValidating: FieldBlocUtils.getInitialStateIsValidating(
+              asyncValidators: asyncValidators,
+              validators: validators,
+              value: initialValue ?? '',
+            ),
+            name: FieldBlocUtils.generateName(name),
+            toJson: (value) => value,
+            extraData: extraData,
+          ),
         );
-
-  @override
-  TextFieldBlocState get initialState => TextFieldBlocState(
-        value: _initialValue,
-        error: _getInitialStateError,
-        isInitial: true,
-        suggestions: _suggestions,
-        isValidated: _isValidated(_getInitialStateIsValidating),
-        isValidating: _getInitialStateIsValidating,
-        toStringName: _toStringName,
-      );
 
   /// Return the parsed `value` to `int` of the current state.
   ///
@@ -76,5 +97,5 @@ class TextFieldBloc extends FieldBlocBase<String, String, TextFieldBlocState> {
   ///
   /// {@macro form_bloc.field_bloc.update_value}
   @override
-  void clear() => add(UpdateFieldBlocValue(''));
+  void clear() => updateInitialValue('');
 }

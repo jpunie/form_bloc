@@ -2,12 +2,14 @@ part of '../field/field_bloc.dart';
 
 /// A `FieldBloc` used to select one item
 /// from multiple items.
-class SelectFieldBloc<Value>
-    extends FieldBlocBase<Value, Value, SelectFieldBlocState<Value>> {
-  final List<Value> _items;
-
+class SelectFieldBloc<Value, ExtraData> extends SingleFieldBloc<Value, Value,
+    SelectFieldBlocState<Value, ExtraData>, ExtraData> {
+  /// ## SelectFieldBloc<Value, ExtraData>
+  ///
   /// ### Properties:
   ///
+  /// * [name] : It is the string that identifies the fieldBloc,
+  /// it is available in [FieldBlocState.name].
   /// * [initialValue] : The initial value of the field,
   /// by default is `null`.
   /// * [validators] : List of [Validator]s.
@@ -31,38 +33,57 @@ class SelectFieldBloc<Value>
   /// It is used to suggest values, usually from an API,
   /// and any of those suggestions can be used to update
   /// the value using [updateValue].
-  /// * [toStringName] : This will be added to [SelectFieldBlocState.toStringName].
   /// * [items] : The list of items that can be selected to update the value.
+  /// * [toJson] : Transform [value] in a JSON value.
+  /// By default returns [value].
+  /// This method is called when you use [FormBlocState.toJson]
+  /// * [extraData] : It is an object that you can use to add extra data, it will be available in the state [FieldBlocState.extraData].
   SelectFieldBloc({
+    String name,
     Value initialValue,
     List<Validator<Value>> validators,
     List<AsyncValidator<Value>> asyncValidators,
     Duration asyncValidatorDebounceTime = const Duration(milliseconds: 500),
     Suggestions<Value> suggestions,
-    String toStringName,
     List<Value> items,
+    dynamic Function(Value value) toJson,
+    ExtraData extraData,
   })  : assert(asyncValidatorDebounceTime != null),
-        _items = items ?? [],
         super(
           initialValue,
           validators,
           asyncValidators,
           asyncValidatorDebounceTime,
           suggestions,
-          toStringName,
+          name,
+          toJson,
+          extraData,
+          SelectFieldBlocState(
+            value: initialValue,
+            error: FieldBlocUtils.getInitialStateError(
+              validators: validators,
+              value: initialValue,
+            ),
+            isInitial: true,
+            suggestions: suggestions,
+            isValidated: FieldBlocUtils.getInitialIsValidated(
+              FieldBlocUtils.getInitialStateIsValidating(
+                asyncValidators: asyncValidators,
+                validators: validators,
+                value: initialValue,
+              ),
+            ),
+            isValidating: FieldBlocUtils.getInitialStateIsValidating(
+              asyncValidators: asyncValidators,
+              validators: validators,
+              value: initialValue,
+            ),
+            name: FieldBlocUtils.generateName(name),
+            items: SingleFieldBloc._itemsWithoutDuplicates(items ?? []),
+            toJson: toJson,
+            extraData: extraData,
+          ),
         );
-
-  @override
-  SelectFieldBlocState<Value> get initialState => SelectFieldBlocState(
-        value: _initialValue,
-        error: _getInitialStateError,
-        isInitial: true,
-        suggestions: _suggestions,
-        isValidated: _isValidated(_getInitialStateIsValidating),
-        isValidating: _getInitialStateIsValidating,
-        toStringName: _toStringName,
-        items: FieldBlocBase._itemsWithoutDuplicates(_items),
-      );
 
   /// Set [items] to the `items` of the current state.
   ///
@@ -80,33 +101,35 @@ class SelectFieldBloc<Value>
   void removeItem(Value item) => add(RemoveFieldBlocItem(item));
 
   @override
-  Stream<SelectFieldBlocState<Value>> _mapCustomEventToState(
+  Stream<SelectFieldBlocState<Value, ExtraData>> _mapCustomEventToState(
     FieldBlocEvent event,
   ) async* {
     if (event is UpdateFieldBlocItems<Value>) {
+      var items = event.items ?? [];
+      items = SingleFieldBloc._itemsWithoutDuplicates(items);
+
       yield state.copyWith(
-        items: Optional.fromNullable(
-          FieldBlocBase._itemsWithoutDuplicates(event.items),
-        ),
+        items: Optional.fromNullable(items),
+        value: items.contains(value) ? null : Optional.absent(),
       );
     } else if (event is AddFieldBlocItem<Value>) {
-      List<Value> items = state.items ?? [];
+      var items = state.items ?? [];
       yield state.copyWith(
         items: Optional.fromNullable(
-          FieldBlocBase._itemsWithoutDuplicates(
+          SingleFieldBloc._itemsWithoutDuplicates(
             List<Value>.from(items)..add(event.item),
           ),
         ),
       );
     } else if (event is RemoveFieldBlocItem<Value>) {
-      List<Value> items = state.items;
+      var items = state.items;
       if (items != null && items.isNotEmpty) {
+        items = SingleFieldBloc._itemsWithoutDuplicates(
+          List<Value>.from(items)..remove(event.item),
+        );
         yield state.copyWith(
-          items: Optional.fromNullable(
-            FieldBlocBase._itemsWithoutDuplicates(
-              List<Value>.from(items)..remove(event.item),
-            ),
-          ),
+          items: Optional.fromNullable(items),
+          value: items.contains(value) ? null : Optional.absent(),
         );
       }
     }

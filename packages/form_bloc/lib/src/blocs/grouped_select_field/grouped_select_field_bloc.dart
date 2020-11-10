@@ -2,10 +2,9 @@ part of '../field/field_bloc.dart';
 
 /// A `FieldBloc` used to select one item from a grouped set
 /// from multiple items.
-class GroupedSelectFieldBloc<GroupValue, Value>
-    extends FieldBlocBase<Value, Value, GroupedSelectFieldBlocState<GroupValue, Value>> {
-  final Map<GroupValue, List<Value>> _grouped_items;
-
+class GroupedSelectFieldBloc<GroupValue, Value, ExtraData>
+    extends SingleFieldBloc<Value, Value,
+        GroupedSelectFieldBlocState<GroupValue, Value, ExtraData>, ExtraData> {
   /// ### Properties:
   ///
   /// * [initialValue] : The initial value of the field,
@@ -34,66 +33,83 @@ class GroupedSelectFieldBloc<GroupValue, Value>
   /// * [toStringName] : This will be added to [SelectFieldBlocState.toStringName].
   /// * [items] : The list of items that can be selected to update the value.
   GroupedSelectFieldBloc({
+    String name,
     Value initialValue,
     List<Validator<Value>> validators,
     List<AsyncValidator<Value>> asyncValidators,
     Duration asyncValidatorDebounceTime = const Duration(milliseconds: 500),
     Suggestions<Value> suggestions,
-    String toStringName,
     Map<GroupValue, List<Value>> items,
+    dynamic Function(Value value) toJson,
+    ExtraData extraData,
   })  : assert(asyncValidatorDebounceTime != null),
-        _grouped_items = items ?? Map(),
         super(
-          initialValue,
-          validators,
-          asyncValidators,
-          asyncValidatorDebounceTime,
-          suggestions,
-          toStringName,
-        );
-
-  @override
-  GroupedSelectFieldBlocState<GroupValue, Value> get initialState => GroupedSelectFieldBlocState(
-        value: _initialValue,
-        error: _getInitialStateError,
-        isInitial: true,
-        suggestions: _suggestions,
-        isValidated: _isValidated(_getInitialStateIsValidating),
-        isValidating: _getInitialStateIsValidating,
-        toStringName: _toStringName,
-        grouped_items: _grouped_items,
-      );
+            initialValue,
+            validators,
+            asyncValidators,
+            asyncValidatorDebounceTime,
+            suggestions,
+            name,
+            toJson,
+            extraData,
+            GroupedSelectFieldBlocState(
+              value: initialValue,
+              error: FieldBlocUtils.getInitialStateError(
+                validators: validators,
+                value: initialValue,
+              ),
+              isInitial: true,
+              suggestions: suggestions,
+              isValidated: FieldBlocUtils.getInitialIsValidated(
+                FieldBlocUtils.getInitialStateIsValidating(
+                  asyncValidators: asyncValidators,
+                  validators: validators,
+                  value: initialValue,
+                ),
+              ),
+              isValidating: FieldBlocUtils.getInitialStateIsValidating(
+                asyncValidators: asyncValidators,
+                validators: validators,
+                value: initialValue,
+              ),
+              name: FieldBlocUtils.generateName(name),
+              grouped_items: items ?? Map(),
+              toJson: toJson,
+              extraData: extraData,
+            ));
 
   /// Set [items] to the `items` of the current state.
   ///
   /// If you want to add or remove elements to `items`
   /// of the current state,
   /// use [addItem] or [removeItem].
-  void updateItems(Map<GroupValue, List<Value>> grouped_items) => add(UpdateFieldBlocGroupedItems(grouped_items));
+  void updateItems(Map<GroupValue, List<Value>> grouped_items) =>
+      add(UpdateFieldBlocGroupedItems(grouped_items));
 
   /// Add [item] to the current `items`
   /// of the current state.
-  void addItem(GroupValue group, Value item) => add(AddFieldBlocGroupedItem(group, item));
+  void addItem(GroupValue group, Value item) =>
+      add(AddFieldBlocGroupedItem(group, item));
 
   /// Remove [item] to the current `items`
   /// of the current state.
   void removeItem(Value item) => add(RemoveFieldBlocItem(item));
 
   @override
-  Stream<GroupedSelectFieldBlocState<GroupValue, Value>> _mapCustomEventToState(
+  Stream<GroupedSelectFieldBlocState<GroupValue, Value, ExtraData>>
+      _mapCustomEventToState(
     FieldBlocEvent event,
   ) async* {
     if (event is UpdateFieldBlocGroupedItems<GroupValue, Value>) {
       yield state.copyWith(
-        grouped_items: Optional.fromNullable(event.grouped_items)
-      );
+          grouped_items: Optional.fromNullable(event.grouped_items));
     } else if (event is AddFieldBlocGroupedItem<GroupValue, Value>) {
-      Map<GroupValue, List<Value>> grouped_items = state.grouped_items ?? Map<GroupValue, List<Value>>();
+      Map<GroupValue, List<Value>> grouped_items =
+          state.grouped_items ?? Map<GroupValue, List<Value>>();
       Map<GroupValue, List<Value>> result = new Map();
       grouped_items.forEach((key, value) {
         List<Value> resolved = List<Value>.from(value);
-        if (key == event.group)
-          resolved.add(event.item);
+        if (key == event.group) resolved.add(event.item);
         result[key] = resolved;
       });
       yield state.copyWith(
@@ -106,9 +122,7 @@ class GroupedSelectFieldBloc<GroupValue, Value>
         grouped_items.forEach((key, value) {
           result[key] = List<Value>.from(value)..remove(event.item);
         });
-        yield state.copyWith(
-          grouped_items: Optional.fromNullable(result)
-        );
+        yield state.copyWith(grouped_items: Optional.fromNullable(result));
       }
     }
   }

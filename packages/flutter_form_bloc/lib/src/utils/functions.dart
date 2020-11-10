@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:form_bloc/form_bloc.dart';
 
@@ -27,30 +30,20 @@ bool fieldBlocIsEnabled({
 }) {
   return isEnabled
       ? enableOnlyWhenFormBlocCanSubmit
-          ? fieldBlocState.formBlocState.canSubmit
+          ? fieldBlocState?.formBloc?.state?.canSubmit ?? true
           : true
       : false;
 }
 
-String defaultErrorBuilder(BuildContext context, String error) {
-  switch (error) {
-    case FieldBlocValidatorsErrors.requiredInputFieldBloc:
-      return 'This field is required.';
-    case FieldBlocValidatorsErrors.requiredBooleanFieldBloc:
-      return 'This field is required.';
-    case FieldBlocValidatorsErrors.requiredTextFieldBloc:
-      return 'This field is required.';
-    case FieldBlocValidatorsErrors.requiredSelectFieldBloc:
-      return 'Please select an option.';
-    case FieldBlocValidatorsErrors.requiredMultiSelectFieldBloc:
-      return 'Please select an option.';
-    case FieldBlocValidatorsErrors.email:
-      return 'The email address is badly formatted.';
-    case FieldBlocValidatorsErrors.passwordMin6Chars:
-      return 'The password must contain at least 6 characters.';
-    case FieldBlocValidatorsErrors.confirmPassword:
-      return 'Must be equal to password.';
-    default:
-      return error;
+Widget widgetBasedOnPlatform({
+  @required Widget mobile,
+  @required Widget other,
+}) {
+  if (kIsWeb) {
+    return other;
+  } else if (Platform.isAndroid || Platform.isIOS) {
+    return mobile;
+  } else {
+    return other;
   }
 }

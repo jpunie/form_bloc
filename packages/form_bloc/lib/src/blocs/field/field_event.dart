@@ -1,8 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:meta/meta.dart';
-
-import '../form/form_state.dart';
-import 'field_bloc.dart';
+part of 'field_bloc.dart';
 
 abstract class FieldBlocEvent extends Equatable {}
 
@@ -185,26 +181,9 @@ class DeselectMultiSelectFieldBlocValue<Value> extends FieldBlocEvent {
   List<Object> get props => [valueToDeselect];
 }
 
-class DisableFieldBlocAutoValidate extends FieldBlocEvent {
-  @override
-  List<Object> get props => [];
-}
-
 class ResetFieldBlocStateIsValidated extends FieldBlocEvent {
   @override
   List<Object> get props => [];
-}
-
-class UpdateFieldBlocStateFormBlocState extends FieldBlocEvent {
-  final FormBlocState formBlocState;
-
-  UpdateFieldBlocStateFormBlocState(this.formBlocState);
-
-  @override
-  String toString() => '$runtimeType { formBlocState: $formBlocState }';
-
-  @override
-  List<Object> get props => [formBlocState];
 }
 
 class UpdateFieldBlocStateError<Value> extends FieldBlocEvent {
@@ -271,12 +250,37 @@ class UpdateAsyncValidators<Value> extends FieldBlocEvent {
 class AddFieldBlocError<Value> extends FieldBlocEvent {
   final Value value;
   final String error;
+  final bool isPermanent;
 
-  AddFieldBlocError({@required this.error, @required this.value});
+  AddFieldBlocError({
+    @required this.error,
+    @required this.value,
+    @required this.isPermanent,
+  });
 
   @override
-  String toString() => '$runtimeType { value: $value, error: $error }';
+  String toString() =>
+      '$runtimeType { value: $value, error: $error, $isPermanent: isPermanent }';
 
   @override
-  List<Object> get props => [value, error];
+  List<Object> get props => [value, error, isPermanent];
+}
+
+class UpdateFieldBlocExtraData<ExtraData> extends FieldBlocEvent {
+  final ExtraData extraData;
+
+  UpdateFieldBlocExtraData(this.extraData);
+
+  @override
+  List<Object> get props => [extraData];
+}
+
+class AddFormBlocAndAutoValidateToFieldBloc extends FieldBlocEvent {
+  final FormBloc<dynamic, dynamic> formBloc;
+  final bool autoValidate;
+  AddFormBlocAndAutoValidateToFieldBloc(
+      {@required this.formBloc, @required this.autoValidate});
+
+  @override
+  List<Object> get props => [formBloc, autoValidate];
 }

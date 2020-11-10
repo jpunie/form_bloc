@@ -1,10 +1,7 @@
-import 'package:meta/meta.dart';
-import 'package:quiver/core.dart';
+part of '../field/field_bloc.dart';
 
-import '../form/form_state.dart';
-import '../field/field_bloc.dart';
-
-class GroupedSelectFieldBlocState<GroupValue, Value> extends FieldBlocState<Value, Value> {
+class GroupedSelectFieldBlocState<GroupValue, Value, ExtraData>
+    extends FieldBlocState<Value, Value, ExtraData> {
   final Map<GroupValue, List<Value>> grouped_items;
 
   GroupedSelectFieldBlocState({
@@ -14,9 +11,11 @@ class GroupedSelectFieldBlocState<GroupValue, Value> extends FieldBlocState<Valu
     @required Suggestions<Value> suggestions,
     @required bool isValidated,
     @required bool isValidating,
-    FormBlocState formBlocState,
-    @required String toStringName,
+    FormBloc formBloc,
+    @required String name,
     @required this.grouped_items,
+    dynamic Function(Value value) toJson,
+    ExtraData extraData,
   }) : super(
           value: value,
           error: error,
@@ -24,20 +23,23 @@ class GroupedSelectFieldBlocState<GroupValue, Value> extends FieldBlocState<Valu
           suggestions: suggestions,
           isValidated: isValidated,
           isValidating: isValidating,
-          formBlocState: formBlocState,
-          toStringName: toStringName,
+          name: name,
+          formBloc: formBloc,
+          toJson: toJson,
+          extraData: extraData,
         );
 
   @override
-  GroupedSelectFieldBlocState<GroupValue, Value> copyWith({
+  GroupedSelectFieldBlocState<GroupValue, Value, ExtraData> copyWith({
     Optional<Value> value,
     Optional<String> error,
     bool isInitial,
     Optional<Suggestions<Value>> suggestions,
     bool isValidated,
     bool isValidating,
-    FormBlocState formBlocState,
+    FormBloc formBloc,
     Optional<Map<GroupValue, List<Value>>> grouped_items,
+    Optional<ExtraData> extraData,
   }) {
     return GroupedSelectFieldBlocState(
       value: value == null ? this.value : value.orNull,
@@ -46,32 +48,17 @@ class GroupedSelectFieldBlocState<GroupValue, Value> extends FieldBlocState<Valu
       suggestions: suggestions == null ? this.suggestions : suggestions.orNull,
       isValidated: isValidated ?? this.isValidated,
       isValidating: isValidating ?? this.isValidating,
-      formBlocState: formBlocState ?? this.formBlocState,
-      toStringName: toStringName,
-      grouped_items: grouped_items == null ? this.grouped_items : grouped_items.orNull,
+      formBloc: formBloc ?? this.formBloc,
+      name: name,
+      grouped_items:
+          grouped_items == null ? this.grouped_items : grouped_items.orNull,
+      toJson: _toJson,
+      extraData: extraData == null ? this.extraData : extraData.orNull,
     );
   }
 
   @override
-  String toString() {
-    String _toString = '';
-    if (toStringName != null) {
-      _toString += '${toStringName}';
-    } else {
-      _toString += '${runtimeType}';
-    }
-    _toString += ' {';
-    _toString += ' value: ${value},';
-    _toString += ' error: "${error}",';
-    _toString += ' isInitial: $isInitial,';
-    _toString += ' isValidated: ${isValidated},';
-    _toString += ' isValidating: ${isValidating},';
-    _toString += ' formBlocState: ${formBlocState},';
-    _toString += ' grouped_items: $grouped_items,';
-    _toString += ' }';
-
-    return _toString;
-  }
+  String toString() => _toStringWith(',\n  grouped_items: $grouped_items');
 
   @override
   List<Object> get props => [
@@ -81,7 +68,8 @@ class GroupedSelectFieldBlocState<GroupValue, Value> extends FieldBlocState<Valu
         suggestions,
         isValidated,
         isValidating,
-        formBlocState,
+        extraData,
+        formBloc,
         grouped_items,
       ];
 }

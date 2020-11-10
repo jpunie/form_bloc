@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_form_bloc/src/can_show_field_bloc_builder.dart';
 import 'package:flutter_form_bloc/src/utils/utils.dart';
-
 import 'package:form_bloc/form_bloc.dart';
+import 'package:flutter_form_bloc/src/field_bloc_builder_control_affinity.dart';
 
 /// A material design checkbox.
 class CheckboxFieldBlocBuilder extends StatelessWidget {
@@ -17,14 +18,21 @@ class CheckboxFieldBlocBuilder extends StatelessWidget {
     this.activeColor,
     this.padding,
     this.nextFocusNode,
-  })  : assert(booleanFieldBloc != null),
-        assert(enableOnlyWhenFormBlocCanSubmit != null),
+    this.controlAffinity = FieldBlocBuilderControlAffinity.leading,
+    this.animateWhenCanShow = true,
+  })  : assert(enableOnlyWhenFormBlocCanSubmit != null),
+        assert(controlAffinity != null),
         assert(isEnabled != null),
         assert(body != null),
         super(key: key);
 
   /// {@macro flutter_form_bloc.FieldBlocBuilder.fieldBloc}
-  final BooleanFieldBloc booleanFieldBloc;
+  final BooleanFieldBloc<Object> booleanFieldBloc;
+
+  /// {@template flutter_form_bloc.FieldBlocBuilderControlAffinity}
+  // Where to place the control in widgets
+  /// {@endtemplate}
+  final FieldBlocBuilderControlAffinity controlAffinity;
 
   /// {@macro flutter_form_bloc.FieldBlocBuilder.errorBuilder}
   final FieldBlocErrorBuilder errorBuilder;
@@ -41,56 +49,91 @@ class CheckboxFieldBlocBuilder extends StatelessWidget {
   /// {@macro flutter_form_bloc.FieldBlocBuilder.nextFocusNode}
   final FocusNode nextFocusNode;
 
-  /// {@macro flutter_form_bloc.FieldBlocBuilder.checkboxBody}
+  /// {@template flutter_form_bloc.FieldBlocBuilder.checkboxBody}
+  /// The widget on the right side of the checkbox
+  /// {@endtemplate}
   final Widget body;
 
-  /// {@macro flutter_form_bloc.FieldBlocBuilder.checkboxColor}
+  /// {@template flutter_form_bloc.FieldBlocBuilder.checkboxActiveColor}
+  /// The color to use when this checkbox is checked.
+  ///
+  /// Defaults to [ThemeData.toggleableActiveColor].
+  /// {@endtemplate}
   final Color checkColor;
 
   /// {@macro flutter_form_bloc.FieldBlocBuilder.checkboxActiveColor}
   final Color activeColor;
 
+  /// {@macro  flutter_form_bloc.FieldBlocBuilder.animateWhenCanShow}
+  final bool animateWhenCanShow;
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BooleanFieldBloc, BooleanFieldBlocState>(
-      bloc: booleanFieldBloc,
-      builder: (context, state) {
-        final isEnabled = fieldBlocIsEnabled(
-          isEnabled: this.isEnabled,
-          enableOnlyWhenFormBlocCanSubmit: enableOnlyWhenFormBlocCanSubmit,
-          fieldBlocState: state,
-        );
+    if (booleanFieldBloc == null) {
+      return SizedBox();
+    }
+    return CanShowFieldBlocBuilder(
+      fieldBloc: booleanFieldBloc,
+      animate: animateWhenCanShow,
+      builder: (_, __) {
+        return BlocBuilder<BooleanFieldBloc, BooleanFieldBlocState>(
+          cubit: booleanFieldBloc,
+          builder: (context, state) {
+            final isEnabled = fieldBlocIsEnabled(
+              isEnabled: this.isEnabled,
+              enableOnlyWhenFormBlocCanSubmit: enableOnlyWhenFormBlocCanSubmit,
+              fieldBlocState: state,
+            );
 
-        return DefaultFieldBlocBuilderPadding(
-          padding: padding,
-          child: InputDecorator(
-            decoration: Style.inputDecorationWithoutBorder.copyWith(
-              prefixIcon: Checkbox(
-                checkColor: Style.getIconColor(
-                  customColor: checkColor,
-                  defaultColor: Theme.of(context).toggleableActiveColor,
+            return DefaultFieldBlocBuilderPadding(
+              padding: padding,
+              child: InputDecorator(
+                decoration: Style.inputDecorationWithoutBorder.copyWith(
+                  contentPadding: EdgeInsets.all(0),
+                  prefixIcon:
+                      controlAffinity == FieldBlocBuilderControlAffinity.leading
+                          ? _buildCheckbox(context: context, state: state)
+                          : null,
+                  suffixIcon: controlAffinity ==
+                          FieldBlocBuilderControlAffinity.trailing
+                      ? _buildCheckbox(context: context, state: state)
+                      : null,
+                  errorText: Style.getErrorText(
+                    context: context,
+                    errorBuilder: errorBuilder,
+                    fieldBlocState: state,
+                    fieldBloc: booleanFieldBloc,
+                  ),
                 ),
-                activeColor: activeColor,
-                value: state.value,
-                onChanged: fieldBlocBuilderOnChange<bool>(
+                child: DefaultFieldBlocBuilderTextStyle(
                   isEnabled: isEnabled,
-                  nextFocusNode: nextFocusNode,
-                  onChanged: booleanFieldBloc.updateValue,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: 48),
+                    child: body,
+                  ),
                 ),
               ),
-              errorText: Style.getErrorText(
-                context: context,
-                errorBuilder: errorBuilder,
-                fieldBlocState: state,
-              ),
-            ),
-            child: DefaultFieldBlocBuilderTextStyle(
-              isEnabled: isEnabled,
-              child: body,
-            ),
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Checkbox _buildCheckbox(
+      {@required BuildContext context, @required BooleanFieldBlocState state}) {
+    return Checkbox(
+      checkColor: Style.getIconColor(
+        customColor: checkColor,
+        defaultColor: Theme.of(context).toggleableActiveColor,
+      ),
+      activeColor: activeColor,
+      value: state.value,
+      onChanged: fieldBlocBuilderOnChange<bool>(
+        isEnabled: isEnabled,
+        nextFocusNode: nextFocusNode,
+        onChanged: booleanFieldBloc.updateValue,
+      ),
     );
   }
 }

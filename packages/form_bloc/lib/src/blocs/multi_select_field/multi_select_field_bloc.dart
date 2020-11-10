@@ -2,14 +2,20 @@ part of '../field/field_bloc.dart';
 
 /// A `FieldBloc` used to select multiple items
 /// from multiple items.
-class MultiSelectFieldBloc<Value> extends FieldBlocBase<List<Value>, Value,
-    MultiSelectFieldBlocState<Value>> {
-  final List<Value> _items;
-
+class MultiSelectFieldBloc<Value, ExtraData> extends SingleFieldBloc<
+    List<Value>,
+    Value,
+    MultiSelectFieldBlocState<Value, ExtraData>,
+    ExtraData> {
+  /// ## MultiSelectFieldBloc<Value, ExtraData>
+  ///
   /// ### Properties:
   ///
+  /// * [name] : It is the string that identifies the fieldBloc,
+  /// it is available in [FieldBlocState.name].
   /// * [initialValue] : The initial value of the field,
   /// by default is a empty list `[]`.
+  /// And if the value is `null` it will be a empty list `[]`.
   /// * [validators] : List of [Validator]s.
   /// Each time the `value` will change,
   /// if the [FormBloc] that use this [MultiSelectFieldBloc] has set
@@ -31,41 +37,57 @@ class MultiSelectFieldBloc<Value> extends FieldBlocBase<List<Value>, Value,
   /// It is used to suggest values, usually from an API,
   /// and any of those suggestions can be used to update
   /// the value using [updateValue].
-  /// * [toStringName] : This will be added to [MultiSelectFieldBlocState.toStringName].
   /// * [items] : The list of items that can be selected to update the value.
+  /// * [toJson] Transform [value] in a JSON value.
+  /// By default returns [value].
+  /// This method is called when you use [FormBlocState.toJson]
+  /// * [extraData] : It is an object that you can use to add extra data, it will be available in the state [FieldBlocState.extraData].
   MultiSelectFieldBloc({
+    String name,
     List<Value> initialValue = const [],
     List<Validator<List<Value>>> validators,
     List<AsyncValidator<List<Value>>> asyncValidators,
     Duration asyncValidatorDebounceTime = const Duration(milliseconds: 500),
     Suggestions<Value> suggestions,
-    String toStringName,
     List<Value> items = const [],
-  })  : assert(initialValue != null),
-        assert(items != null),
-        assert(asyncValidatorDebounceTime != null),
-        _items = items,
+    dynamic Function(List<Value> value) toJson,
+    ExtraData extraData,
+  })  : assert(asyncValidatorDebounceTime != null),
         super(
-          initialValue,
+          initialValue ?? const [],
           validators,
           asyncValidators,
           asyncValidatorDebounceTime,
           suggestions,
-          toStringName,
+          name,
+          toJson,
+          extraData,
+          MultiSelectFieldBlocState(
+            value: initialValue ?? const [],
+            error: FieldBlocUtils.getInitialStateError(
+              validators: validators,
+              value: initialValue ?? const [],
+            ),
+            isInitial: true,
+            suggestions: suggestions,
+            isValidated: FieldBlocUtils.getInitialIsValidated(
+              FieldBlocUtils.getInitialStateIsValidating(
+                asyncValidators: asyncValidators,
+                validators: validators,
+                value: initialValue ?? const [],
+              ),
+            ),
+            isValidating: FieldBlocUtils.getInitialStateIsValidating(
+              asyncValidators: asyncValidators,
+              validators: validators,
+              value: initialValue ?? const [],
+            ),
+            name: FieldBlocUtils.generateName(name),
+            items: SingleFieldBloc._itemsWithoutDuplicates(items ?? []),
+            toJson: toJson,
+            extraData: extraData,
+          ),
         );
-
-  @override
-  MultiSelectFieldBlocState<Value> get initialState =>
-      MultiSelectFieldBlocState(
-        value: _initialValue,
-        error: _getInitialStateError,
-        isInitial: true,
-        suggestions: _suggestions,
-        isValidated: _isValidated(_getInitialStateIsValidating),
-        isValidating: _getInitialStateIsValidating,
-        toStringName: _toStringName,
-        items: FieldBlocBase._itemsWithoutDuplicates(_items),
-      );
 
   /// Set [items] to the `items` of the current state.
   ///
@@ -124,38 +146,40 @@ class MultiSelectFieldBloc<Value> extends FieldBlocBase<List<Value>, Value,
       add(DeselectMultiSelectFieldBlocValue(valueToDeselect));
 
   @override
-  Stream<MultiSelectFieldBlocState<Value>> _mapCustomEventToState(
+  Stream<MultiSelectFieldBlocState<Value, ExtraData>> _mapCustomEventToState(
     FieldBlocEvent event,
   ) async* {
     if (event is UpdateFieldBlocItems<Value>) {
+      var items = event.items ?? [];
+      items = SingleFieldBloc._itemsWithoutDuplicates(items);
+
       yield state.copyWith(
-        items: Optional.fromNullable(
-          FieldBlocBase._itemsWithoutDuplicates(event.items),
-        ),
+        items: Optional.fromNullable(items),
+        value: items.contains(value) ? null : Optional.of([]),
       );
     } else if (event is AddFieldBlocItem<Value>) {
-      List<Value> items = state.items ?? [];
+      var items = state.items ?? [];
       yield state.copyWith(
         items: Optional.fromNullable(
-          FieldBlocBase._itemsWithoutDuplicates(
+          SingleFieldBloc._itemsWithoutDuplicates(
             List<Value>.from(items)..add(event.item),
           ),
         ),
       );
     } else if (event is RemoveFieldBlocItem<Value>) {
-      List<Value> items = state.items;
+      var items = state.items;
       if (items != null && items.isNotEmpty) {
+        items = SingleFieldBloc._itemsWithoutDuplicates(
+          List<Value>.from(items)..remove(event.item),
+        );
         yield state.copyWith(
-          items: Optional.fromNullable(
-            FieldBlocBase._itemsWithoutDuplicates(
-              List<Value>.from(items)..remove(event.item),
-            ),
-          ),
+          items: Optional.fromNullable(items),
+          value: items.contains(value) ? null : Optional.of([]),
         );
       }
     } else if (event is SelectMultiSelectFieldBlocValue<Value>) {
-      List<Value> newValue = state.value ?? [];
-      newValue = FieldBlocBase._itemsWithoutDuplicates(
+      var newValue = state.value ?? [];
+      newValue = SingleFieldBloc._itemsWithoutDuplicates(
         List<Value>.from(newValue)..add(event.valueToSelect),
       );
       if (_canUpdateValue(value: newValue, isInitialValue: false)) {
@@ -173,7 +197,7 @@ class MultiSelectFieldBloc<Value> extends FieldBlocBase<List<Value>, Value,
         );
       }
     } else if (event is DeselectMultiSelectFieldBlocValue<Value>) {
-      List<Value> newValue = state.value;
+      var newValue = state.value;
       newValue = List<Value>.from(newValue)..remove(event.valueToDeselect);
       if (_canUpdateValue(value: newValue, isInitialValue: false)) {
         final error = _getError(newValue);

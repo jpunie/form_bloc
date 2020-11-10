@@ -8,26 +8,25 @@ void main() {
       test('call the super constructor correctly.', () {
         final suggestions = (String pattern) async => ['1'];
         final validators = [
-          FieldBlocValidators.requiredTextFieldBloc,
-          (String value) => 'error'
+          FieldBlocValidators.required,
+          (String value) => 'error',
         ];
-        final toStringName = 'field';
 
-        final fieldBloc = TextFieldBloc(
+        final fieldBloc = TextFieldBloc<dynamic>(
+          name: 'name',
           initialValue: '',
           validators: validators,
           suggestions: suggestions,
-          toStringName: toStringName,
         );
 
-        final state1 = TextFieldBlocState(
+        final state1 = TextFieldBlocState<dynamic>(
           value: '',
-          error: FieldBlocValidatorsErrors.requiredTextFieldBloc,
+          error: FieldBlocValidatorsErrors.required,
           isInitial: true,
           suggestions: suggestions,
           isValidated: true,
           isValidating: false,
-          toStringName: toStringName,
+          name: 'name',
         );
         final state2 = state1.copyWith(
           value: Optional.of('1'),
@@ -36,7 +35,7 @@ void main() {
         );
 
         final expectedStates = [
-          state1,
+          // state1,
           state2,
         ];
         expect(
@@ -51,82 +50,72 @@ void main() {
     test('initial state.', () {
       TextFieldBloc fieldBloc;
       TextFieldBlocState initialState;
-      List<TextFieldBlocState> expectedStates;
 
-      fieldBloc = TextFieldBloc();
+      fieldBloc = TextFieldBloc<dynamic>(
+        name: 'name',
+      );
 
-      initialState = TextFieldBlocState(
+      initialState = TextFieldBlocState<dynamic>(
         value: '',
         error: null,
         isInitial: true,
         suggestions: null,
         isValidated: true,
         isValidating: false,
-        toStringName: null,
+        name: 'name',
       );
 
-      expectedStates = [initialState];
-
       expect(
-        fieldBloc.initialState,
+        fieldBloc.state,
         initialState,
-      );
-
-      expect(
-        fieldBloc,
-        emitsInOrder(expectedStates),
       );
 
       fieldBloc.close();
 
-      fieldBloc = TextFieldBloc(
+      fieldBloc = TextFieldBloc<dynamic>(
+        name: 'name',
+        initialValue: 'a',
         validators: [(value) => 'error'],
       );
 
-      initialState = TextFieldBlocState(
-        value: '',
+      initialState = TextFieldBlocState<dynamic>(
+        value: 'a',
         error: 'error',
         isInitial: true,
         suggestions: null,
         isValidated: true,
         isValidating: false,
-        toStringName: null,
+        name: 'name',
       );
 
-      expectedStates = [initialState];
-
       expect(
-        fieldBloc.initialState,
+        fieldBloc.state,
         initialState,
-      );
-
-      expect(
-        fieldBloc,
-        emitsInOrder(expectedStates),
       );
     });
 
     test('clear method.', () {
-      final fieldBloc = TextFieldBloc(
+      final fieldBloc = TextFieldBloc<dynamic>(
+        name: 'name',
         initialValue: '1',
       );
 
-      final state1 = TextFieldBlocState(
+      final state1 = TextFieldBlocState<dynamic>(
         value: '1',
         error: null,
         isInitial: true,
         suggestions: null,
         isValidated: true,
         isValidating: false,
-        toStringName: null,
+        name: 'name',
       );
       final state2 = state1.copyWith(
         value: Optional.of(''),
-        isInitial: false,
+        isInitial: true,
       );
 
       final expectedStates = [
-        state1,
+        // state1,
         state2,
       ];
       expect(
@@ -135,6 +124,45 @@ void main() {
       );
 
       fieldBloc.clear();
+    });
+
+    test('if the initialValue is null, it will be an empty string', () {
+      TextFieldBloc fieldBloc;
+      TextFieldBlocState initialState;
+
+      fieldBloc = TextFieldBloc<dynamic>(name: 'name', initialValue: null);
+
+      initialState = TextFieldBlocState<dynamic>(
+        value: '',
+        error: null,
+        isInitial: true,
+        suggestions: null,
+        isValidated: true,
+        isValidating: false,
+        name: 'name',
+      );
+
+      expect(
+        fieldBloc.state,
+        initialState,
+      );
+    });
+
+    test('toJson return value', () async {
+      final fieldBloc = TextFieldBloc<dynamic>(initialValue: 'hello');
+
+      expect(fieldBloc.state.toJson(), 'hello');
+    });
+
+    test('extraData added to extraData in state', () async {
+      final expectedExtraData = 0;
+
+      final fieldBloc = TextFieldBloc<int>(extraData: 0);
+
+      expect(
+        fieldBloc.state.extraData,
+        expectedExtraData,
+      );
     });
   });
 }
