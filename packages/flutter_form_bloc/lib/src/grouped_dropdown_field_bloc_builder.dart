@@ -5,13 +5,14 @@ import 'package:flutter/material.dart'
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_bloc/src/grouped_dropdown.dart';
 import 'package:flutter_form_bloc/src/utils/utils.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:form_bloc/form_bloc.dart';
 import 'package:rxdart/subjects.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 /// A material design dropdown.
-class GroupedDropdownFieldBlocBuilder<GroupValue, Value> extends StatefulWidget {
+class GroupedDropdownFieldBlocBuilder<GroupValue, Value>
+    extends StatefulWidget {
   GroupedDropdownFieldBlocBuilder({
     Key key,
     @required this.selectFieldBloc,
@@ -35,7 +36,7 @@ class GroupedDropdownFieldBlocBuilder<GroupValue, Value> extends StatefulWidget 
         super(key: key);
 
   /// {@macro flutter_form_bloc.FieldBlocBuilder.fieldBloc}
-  final GroupedSelectFieldBloc<GroupValue, Value> selectFieldBloc;
+  final GroupedSelectFieldBloc<GroupValue, Value, Object> selectFieldBloc;
 
   /// {@macro flutter_form_bloc.FieldBlocBuilder.errorBuilder}
   final FieldBlocErrorBuilder errorBuilder;
@@ -77,18 +78,21 @@ class GroupedDropdownFieldBlocBuilder<GroupValue, Value> extends StatefulWidget 
 }
 
 class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
-    extends State<GroupedDropdownFieldBlocBuilder<GroupValue, Value>> with WidgetsBindingObserver {
+    extends State<GroupedDropdownFieldBlocBuilder<GroupValue, Value>>
+    with WidgetsBindingObserver {
   final PublishSubject<void> _onPressedController = PublishSubject();
 
   PublishSubject<double> _dropdownHeightController = PublishSubject();
 
   double _dropdownHeight = 0;
 
-  KeyboardVisibilityNotification _keyboardVisibility =
-      KeyboardVisibilityNotification();
-  int _keyboardSubscriptionId;
+  StreamSubscription<bool> _keyboardSubscription;
+
+  bool _isKeyboardVisible;
 
   FocusNode _focusNode = FocusNode();
+
+  bool _focusedAfterKeyboardClosing = false;
 
   @override
   void initState() {
@@ -106,10 +110,14 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
 
     _effectiveFocusNode.addListener(_onFocusRequest);
 
-    _keyboardSubscriptionId = _keyboardVisibility.addNewListener(
-      onChange: (isVisible) =>
-          _keyboardVisibility.isKeyboardVisible = isVisible,
-    );
+    _isKeyboardVisible = KeyboardVisibility.isVisible;
+
+    _keyboardSubscription = KeyboardVisibility.onChange.listen((bool visible) {
+      setState(() {
+        _isKeyboardVisible = visible;
+        print(_isKeyboardVisible);
+      });
+    });
   }
 
   @override
@@ -117,13 +125,11 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
     _onPressedController.close();
     _dropdownHeightController.close();
 
-    _keyboardVisibility.removeListener(_keyboardSubscriptionId);
-
-    _keyboardVisibility.dispose();
-
     _effectiveFocusNode.removeListener(_onFocusRequest);
 
     _focusNode.dispose();
+
+    _keyboardSubscription.cancel();
 
     super.dispose();
   }
@@ -132,8 +138,9 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _effectiveFocusNode,
-      child: BlocBuilder<GroupedSelectFieldBloc<GroupValue, Value>, GroupedSelectFieldBlocState<GroupValue, Value>>(
-        bloc: widget.selectFieldBloc,
+      child: BlocBuilder<GroupedSelectFieldBloc<GroupValue, Value, dynamic>,
+          GroupedSelectFieldBlocState<GroupValue, Value, dynamic>>(
+        cubit: widget.selectFieldBloc,
         builder: (context, fieldState) {
           final isEnabled = fieldBlocIsEnabled(
             isEnabled: widget.isEnabled,
@@ -231,14 +238,13 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
     Map<GroupValue, Iterable<Value>> groupedItems,
   ) {
     final groupStyle = Theme.of(context).textTheme.subhead.copyWith(
-          color: ThemeData.estimateBrightnessForColor(
-                      Theme.of(context).canvasColor) ==
-                  Brightness.dark
-              ? Theme.of(context).primaryColorDark
-              : Theme.of(context).primaryColor,
-          fontWeight: FontWeight.bold,
-          decoration: TextDecoration.underline
-        );
+        color: ThemeData.estimateBrightnessForColor(
+                    Theme.of(context).canvasColor) ==
+                Brightness.dark
+            ? Theme.of(context).primaryColorDark
+            : Theme.of(context).primaryColor,
+        fontWeight: FontWeight.bold,
+        decoration: TextDecoration.underline);
     final style = Theme.of(context).textTheme.subhead.copyWith(
           color: ThemeData.estimateBrightnessForColor(
                       Theme.of(context).canvasColor) ==
@@ -250,7 +256,6 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
     List<GroupedDropdownMenuItem<GroupValue, Value>> menuItems = [];
 
     groupedItems.forEach((group, items) {
-
       menuItems.add(GroupedDropdownMenuItem<GroupValue, Value>(
         group: group,
         value: null,
@@ -284,20 +289,40 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
   void _onDropdownPressed() async {
     if (widget.selectFieldBloc.state.grouped_items.isNotEmpty) {
 //TODO: Trick: https://github.com/flutter/flutter/issues/18672#issuecomment-426522889
-      if (_keyboardVisibility.isKeyboardVisible) {
+      // if (_keyboardVisibility.isKeyboardVisible) {
+      //   _effectiveFocusNode.requestFocus();
+      //   await Future<void>.delayed(Duration(milliseconds: 1));
+      //   _effectiveFocusNode.unfocus();
+      //   await Future<void>.delayed(Duration(
+      //       milliseconds:
+      //           widget.millisecondsForShowDropdownItemsWhenKeyboardIsOpen));
+      // }
+      // _onPressedController.add(null);
+      if (_isKeyboardVisible) {
         _effectiveFocusNode.requestFocus();
-        await Future<void>.delayed(Duration(milliseconds: 1));
-        _effectiveFocusNode.unfocus();
         await Future<void>.delayed(Duration(
             milliseconds:
                 widget.millisecondsForShowDropdownItemsWhenKeyboardIsOpen));
+        setState(() {
+          _focusedAfterKeyboardClosing = true;
+        });
+        _onPressedController.add(null);
+      } else if (_focusedAfterKeyboardClosing) {
+        FocusScope.of(context).unfocus();
+        setState(() {
+          _focusedAfterKeyboardClosing = false;
+        });
+      } else {
+        _onPressedController.add(null);
       }
-      _onPressedController.add(null);
     }
   }
 
   InputDecoration _buildDecoration(
-      BuildContext context, GroupedSelectFieldBlocState<GroupValue, Value> state, bool isEnabled) {
+    BuildContext context,
+    GroupedSelectFieldBlocState<GroupValue, Value, dynamic> state,
+    bool isEnabled,
+  ) {
     InputDecoration decoration = widget.decoration;
 
     if (decoration.contentPadding == null) {
