@@ -15,7 +15,11 @@ dependencies:
   flutter_bloc: ^6.0.0
   # form_bloc: ^0.19.0
   form_bloc:
-    path: ../form_bloc
+    git:
+      url: git://github.com/jpunie/form_bloc.git
+      ref: 2094b358eabfeb9c257586a259aeb63df02e3494
+      path: packages/form_bloc
+    # path: ../form_bloc
   rxdart: ^0.24.0
   flutter_keyboard_visibility: ^3.0.0
   collection: ^1.14.11
