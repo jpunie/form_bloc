@@ -116,7 +116,6 @@ class _DropdownFieldBlocBuilderMobileState<Value>
     _keyboardSubscription = KeyboardVisibility.onChange.listen((bool visible) {
       setState(() {
         _isKeyboardVisible = visible;
-        print(_isKeyboardVisible);
       });
     });
   }

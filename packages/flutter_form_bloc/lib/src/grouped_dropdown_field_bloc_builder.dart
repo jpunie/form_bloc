@@ -102,9 +102,11 @@ class _GroupedDropdownFieldBlocBuilderState<GroupValue, Value>
 
     _dropdownHeightController.listen((height) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          _dropdownHeight = height;
-        });
+        if (mounted) {
+          setState(() {
+            _dropdownHeight = height;
+          });
+        }
       });
     });
 

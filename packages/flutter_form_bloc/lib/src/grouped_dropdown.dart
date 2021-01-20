@@ -121,10 +121,12 @@ class _GroupedDropdownMenu<G, T> extends StatefulWidget {
   final EdgeInsets padding;
 
   @override
-  _GroupedDropdownMenuState<G, T> createState() => _GroupedDropdownMenuState<G, T>();
+  _GroupedDropdownMenuState<G, T> createState() =>
+      _GroupedDropdownMenuState<G, T>();
 }
 
-class _GroupedDropdownMenuState<G, T> extends State<_GroupedDropdownMenu<G, T>> {
+class _GroupedDropdownMenuState<G, T>
+    extends State<_GroupedDropdownMenu<G, T>> {
   CurvedAnimation _fadeOpacity;
   CurvedAnimation _resize;
 
@@ -187,11 +189,13 @@ class _GroupedDropdownMenuState<G, T> extends State<_GroupedDropdownMenu<G, T>> 
             padding: widget.padding,
             child: route.items[itemIndex],
           ),
-          onTap: route.items[itemIndex].value != null ? () => Navigator.pop(
-            context,
-            _GroupedDropdownRouteResult<G, T>(route.items[itemIndex].value),
-          ) : null
-          ,
+          onTap: route.items[itemIndex].value != null
+              ? () => Navigator.pop(
+                    context,
+                    _GroupedDropdownRouteResult<G, T>(
+                        route.items[itemIndex].value),
+                  )
+              : null,
         ),
       ));
     }
@@ -318,7 +322,8 @@ class _GroupedDropdownRouteResult<G, T> {
   int get hashCode => result.hashCode;
 }
 
-class _GroupedDropdownRoute<G, T> extends PopupRoute<_GroupedDropdownRouteResult<G, T>> {
+class _GroupedDropdownRoute<G, T>
+    extends PopupRoute<_GroupedDropdownRouteResult<G, T>> {
   _GroupedDropdownRoute({
     this.items,
     this.padding,
@@ -511,7 +516,6 @@ class GroupedDropdownMenuItem<G, T> extends StatelessWidget {
   final String text;
   final TextStyle style;
 
-
   /// The group information to return if the user selects this menu item.
   final G group;
 
@@ -576,7 +580,8 @@ class GroupedDropdownButtonHideUnderline extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(GroupedDropdownButtonHideUnderline oldWidget) => false;
+  bool updateShouldNotify(GroupedDropdownButtonHideUnderline oldWidget) =>
+      false;
 }
 
 /// A material design button for selecting from a list of items.
@@ -639,7 +644,8 @@ class GroupedDropdownButton<G, T> extends StatefulWidget {
             items.isEmpty ||
             value == null ||
             items
-                    .where((GroupedDropdownMenuItem<G, T> item) => item.value == value)
+                    .where((GroupedDropdownMenuItem<G, T> item) =>
+                        item.value == value)
                     .length ==
                 1),
         assert(elevation != null),
@@ -736,11 +742,12 @@ class GroupedDropdownButton<G, T> extends StatefulWidget {
   final bool isDense;
 
   @override
-  _GroupedDropdownButtonState<G, T> createState() => _GroupedDropdownButtonState<G, T>();
+  _GroupedDropdownButtonState<G, T> createState() =>
+      _GroupedDropdownButtonState<G, T>();
 }
 
-class _GroupedDropdownButtonState<G, T> extends State<GroupedDropdownButton<G, T>>
-    with WidgetsBindingObserver {
+class _GroupedDropdownButtonState<G, T>
+    extends State<GroupedDropdownButton<G, T>> with WidgetsBindingObserver {
   int _selectedIndex;
   _GroupedDropdownRoute<G, T> _dropdownRoute;
   StreamSubscription<void> callOnPressedSubscription;
@@ -793,7 +800,8 @@ class _GroupedDropdownButtonState<G, T> extends State<GroupedDropdownButton<G, T
 
     assert(widget.value == null ||
         widget.items
-                .where((GroupedDropdownMenuItem<G, T> item) => item.value == widget.value)
+                .where((GroupedDropdownMenuItem<G, T> item) =>
+                    item.value == widget.value)
                 .length ==
             1);
     _selectedIndex = null;
@@ -830,7 +838,7 @@ class _GroupedDropdownButtonState<G, T> extends State<GroupedDropdownButton<G, T
         padding: _kMenuItemPadding.resolve(textDirection),
         selectedIndex: _selectedIndex ?? 0,
         elevation: widget.elevation,
-        theme: Theme.of(context, shadowThemeOnly: true),
+        theme: Theme.of(context),
         style: _textStyle,
         barrierLabel:
             MaterialLocalizations.of(context).modalBarrierDismissLabel,
