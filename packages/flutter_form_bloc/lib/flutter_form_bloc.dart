@@ -10,6 +10,7 @@ export 'src/chip/filter_chip_field_bloc_builder.dart';
 export 'src/date_time/date_time_field_bloc_builder.dart';
 export 'src/date_time/time_field_bloc_builder.dart';
 export 'src/dropdown_field_bloc_builder.dart';
+export 'src/grouped_dropdown_field_bloc_builder.dart';
 export 'src/features/appear/can_show_field_bloc_builder.dart';
 export 'src/features/scroll/scrollable_field_bloc_target.dart';
 export 'src/features/scroll/scrollable_form_bloc_manager.dart';

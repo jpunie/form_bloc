@@ -56,6 +56,21 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
     validators: [FieldBlocValidators.required],
   );
 
+  final groupedSelect = GroupedSelectFieldBloc<String,
+      GroupedDropdownValue<String, String>, dynamic>(
+    items: {
+      'first': [
+        GroupedDropdownValue('first', 'Option 1'),
+        GroupedDropdownValue('first', 'Option 2')
+      ],
+      'second': [
+        GroupedDropdownValue('second', 'Option 3'),
+        GroupedDropdownValue('second', 'Option 4')
+      ]
+    },
+    validators: [FieldBlocValidators.required],
+  );
+
   final multiSelect1 = MultiSelectFieldBloc<String, dynamic>(
     items: [
       'Option 1',
@@ -83,6 +98,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       boolean1,
       boolean2,
       select1,
+      groupedSelect,
       select2,
       multiSelect1,
       date1,
@@ -148,6 +164,11 @@ class AllFieldsForm extends StatelessWidget {
               ],
             ),
             body: FormBlocListener<AllFieldsFormBloc, String, String>(
+              onSubmissionFailed: (context, state) {
+                LoadingDialog.hide(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("onSubmissionFailed")));
+              },
               onSubmitting: (context, state) {
                 LoadingDialog.show(context);
               },
@@ -245,6 +266,21 @@ class AllFieldsForm extends StatelessWidget {
                         ),
                         itemBuilder: (context, value) => FieldItem(
                           isEnabled: value != 'Option 1',
+                          child: Text(value),
+                        ),
+                      ),
+                      GroupedDropdownFieldBlocBuilder<String,
+                          GroupedDropdownValue<String, String>>(
+                        selectFieldBloc: formBloc.groupedSelect,
+                        decoration: const InputDecoration(
+                          labelText: 'GroupedDropdownFieldBlocBuilder',
+                        ),
+                        itemBuilder: (context, value) => FieldItem(
+                          isEnabled: value.value != 'Option 1',
+                          child: Text(value.value),
+                        ),
+                        groupBuilder: (context, value) => FieldItem(
+                          isEnabled: false,
                           child: Text(value),
                         ),
                       ),
