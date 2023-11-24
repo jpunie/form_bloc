@@ -3,18 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:form_bloc/form_bloc.dart' as form_bloc;
 
 typedef FormBlocListenerCallback<
-        FormBlocState extends form_bloc
-            .FormBlocState<SuccessResponse, ErrorResponse>,
+        FormBlocState2 extends form_bloc
+        .FormBlocState<SuccessResponse, ErrorResponse>,
         SuccessResponse,
         ErrorResponse>
-    = void Function(BuildContext context, FormBlocState state);
+    = void Function(BuildContext context, FormBlocState2 state);
 
 /// [BlocListener] that reacts to the state changes of the FormBloc.
 class FormBlocListener<
-        FormBloc extends form_bloc.FormBloc<SuccessResponse, ErrorResponse>,
+        FormBloc2 extends form_bloc.FormBloc<SuccessResponse, ErrorResponse>,
         SuccessResponse,
         ErrorResponse>
-    extends BlocListener<FormBloc,
+    extends BlocListener<FormBloc2,
         form_bloc.FormBlocState<SuccessResponse, ErrorResponse>> {
   /// [BlocListener] that reacts to the state changes of the FormBloc.
   /// {@macro bloclistener}
@@ -40,40 +40,33 @@ class FormBlocListener<
           listenWhen: (previousState, state) =>
               previousState.runtimeType != state.runtimeType,
           listener: (context, state) {
-            if (state is form_bloc
-                    .FormBlocLoading<SuccessResponse, ErrorResponse> &&
+            if (state is form_bloc.FormBlocLoading<SuccessResponse, ErrorResponse> &&
                 onLoading != null) {
               onLoading(context, state);
-            } else if (state is form_bloc
-                    .FormBlocLoaded<SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocLoaded<SuccessResponse, ErrorResponse> &&
                 onLoaded != null) {
               onLoaded(context, state);
-            } else if (state is form_bloc
-                    .FormBlocLoadFailed<SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocLoadFailed<SuccessResponse, ErrorResponse> &&
                 onLoadFailed != null) {
               onLoadFailed(context, state);
             } else if (state is form_bloc
                     .FormBlocSubmitting<SuccessResponse, ErrorResponse> &&
                 onSubmitting != null) {
               onSubmitting(context, state);
-            } else if (state is form_bloc
-                    .FormBlocSuccess<SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocSuccess<SuccessResponse, ErrorResponse> &&
                 onSuccess != null) {
               onSuccess(context, state);
-            } else if (state is form_bloc
-                    .FormBlocFailure<SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocFailure<SuccessResponse, ErrorResponse> &&
                 onFailure != null) {
               onFailure(context, state);
-            } else if (state is form_bloc.FormBlocSubmissionCancelled<
-                    SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocSubmissionCancelled<SuccessResponse, ErrorResponse> &&
                 onSubmissionCancelled != null) {
               onSubmissionCancelled(context, state);
             } else if (state is form_bloc
                     .FormBlocSubmissionFailed<SuccessResponse, ErrorResponse> &&
                 onSubmissionFailed != null) {
               onSubmissionFailed(context, state);
-            } else if (state is form_bloc
-                    .FormBlocDeleting<SuccessResponse, ErrorResponse> &&
+            } else if (state is form_bloc.FormBlocDeleting<SuccessResponse, ErrorResponse> &&
                 onDeleting != null) {
               onDeleting(context, state);
             } else if (state is form_bloc
@@ -157,7 +150,7 @@ class FormBlocListener<
   /// If the [formBloc] parameter is omitted, [FormBlocListener]
   /// will automatically perform a lookup using
   /// [BlocProvider].of<[FormBloc]> and the current [BuildContext].
-  final FormBloc? formBloc;
+  final FormBloc2? formBloc;
 
   /// The [Widget] which will be rendered as a descendant of the [BlocListener].
   @override
