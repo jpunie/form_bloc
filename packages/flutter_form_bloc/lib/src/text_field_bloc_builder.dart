@@ -725,7 +725,7 @@ class TextFieldBlocBuilder extends StatefulWidget {
             fieldTheme.obscureFalseIcon,
       ),
       suggestionsTextStyle: fieldTheme.suggestionsTextStyle ??
-          theme.textTheme.subtitle1!.copyWith(
+          theme.textTheme.titleMedium!.copyWith(
             color: ThemeData.estimateBrightnessForColor(theme.canvasColor) ==
                     Brightness.dark
                 ? Colors.white
